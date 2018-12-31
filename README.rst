@@ -45,3 +45,10 @@ Alternatively, detecting the correct compression module based on the file extens
 
     with tarfile.open('some-archive.tar.zstd', 'r') as archive:
         archive.extractall()
+
+Development
+-----------
+
+Install the project's dependencies with :code:`pip install .[zstd]`.
+
+Run the tests via :code:`python3 setup.py test`.
