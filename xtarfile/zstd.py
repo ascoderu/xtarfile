@@ -40,4 +40,4 @@ class ZstandardTarfile:
 
 
 if zstandard is None:
-    ZstandardTarfile = None
+    ZstandardTarfile = None  # noqa F811
