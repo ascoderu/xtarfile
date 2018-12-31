@@ -6,6 +6,7 @@ from tarfile import TarInfo
 from tempfile import mkstemp
 from unittest import TestCase
 
+from xtarfile.xtarfile import get_compression
 from xtarfile.xtarfile import xtarfile_open
 from xtarfile.xtarfile import HANDLERS
 
@@ -39,6 +40,16 @@ class ExplicitOpenIdContext:
 
     def mode(self, mode):
         return '{}|{}'.format(mode, self.compressor)
+
+
+class GetCompressionTests(TestCase):
+    def test_prefers_explicit_open_mode(self):
+        compression = get_compression('foo.tar.gz', 'r:bz2')
+        self.assertEqual(compression, 'bz2')
+
+    def test_falls_back_to_extension(self):
+        compression = get_compression('foo.tar.gz', 'r')
+        self.assertEqual(compression, 'gz')
 
 
 class OpenTests(TestCase):
