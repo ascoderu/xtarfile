@@ -35,7 +35,7 @@ class ExplicitOpenIdContext:
         return self.__class__.__name__
 
     def given_file(self):
-        return self.test_case.given_file(suffix=None)
+        return self.test_case.given_file(suffix='')
 
     def mode(self, mode):
         return '{}|{}'.format(mode, self.compressor)
