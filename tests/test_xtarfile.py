@@ -6,9 +6,9 @@ from tarfile import TarInfo
 from tempfile import mkstemp
 from unittest import TestCase
 
+from xtarfile.xtarfile import SUPPORTED_FORMATS
 from xtarfile.xtarfile import get_compression
 from xtarfile.xtarfile import xtarfile_open
-from xtarfile.xtarfile import HANDLERS
 
 
 class FileExtensionIdContext:
@@ -54,11 +54,9 @@ class GetCompressionTests(TestCase):
 
 class OpenTests(TestCase):
     def test_roundtrip(self):
-        plugins = [key for (key, value) in HANDLERS.items() if value]
-        compressors = ['gz', 'bz2', 'xz'] + plugins
         contexts = (ExplicitOpenIdContext, FileExtensionIdContext)
 
-        for compressor, ctx in product(compressors, contexts):
+        for compressor, ctx in product(SUPPORTED_FORMATS, contexts):
             context = ctx(self, compressor)
             with self.subTest(compressor=compressor, context=str(context)):
                 self._test_roundtrip(context)
