@@ -5,7 +5,8 @@ from xtarfile.zstd import ZstandardTarfile
 
 
 _HANDLERS = {
-    'zstd': ZstandardTarfile
+    'zstd': ZstandardTarfile,
+    'zst': ZstandardTarfile,
 }
 
 _NATIVE_FORMATS = ('gz', 'bz2', 'xz')
