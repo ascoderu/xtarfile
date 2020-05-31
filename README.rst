@@ -1,8 +1,8 @@
 xtarfile
 ========
 
-.. image:: https://api.travis-ci.org/ascoderu/xtarfile.svg?branch=master
-    :target: https://travis-ci.org/ascoderu/xtarfile
+.. image:: https://github.com/ascoderu/xtarfile/workflows/Tests/badge.svg
+    :target: https://github.com/ascoderu/xtarfile/actions
 
 .. image:: https://img.shields.io/pypi/v/xtarfile.svg
     :target: https://pypi.org/project/xtarfile/
