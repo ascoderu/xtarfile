@@ -29,9 +29,9 @@ class ZstandardTarfile:
         finally:
             # We delete it manually because otherwise on Windows
             # it gets deleted before we move it to the output file location.
-            # This is because on Windows, file handles with the O_TEMPORARY flag
-            # (which is set if we pass `delete=True`) are deleted as soon as
-            # they're closed.
+            # This is because on Windows, file handles with the O_TEMPORARY
+            # flag (which is set if we pass `delete=True`) are deleted as
+            # soon as they're closed.
             decompressed.close()
             os_remove(decompressed.name)
 
@@ -51,9 +51,9 @@ class ZstandardTarfile:
         finally:
             # We delete it manually because otherwise on Windows
             # it gets deleted before we move it to the output file location.
-            # This is because on Windows, file handles with the O_TEMPORARY flag
-            # (which is set if we pass `delete=True`) are deleted as soon as
-            # they're closed.
+            # This is because on Windows, file handles with the O_TEMPORARY
+            # flag (which is set if we pass `delete=True`) are deleted as
+            # soon as they're closed.
             decompressed.close()
             os_remove(decompressed.name)
 
