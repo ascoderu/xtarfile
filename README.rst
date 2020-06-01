@@ -1,7 +1,7 @@
 xtarfile
 ========
 
-.. image:: https://github.com/ascoderu/xtarfile/workflows/Tests/badge.svg
+.. image:: https://github.com/ascoderu/xtarfile/workflows/CI/badge.svg
     :target: https://github.com/ascoderu/xtarfile/actions
 
 .. image:: https://img.shields.io/pypi/v/xtarfile.svg
