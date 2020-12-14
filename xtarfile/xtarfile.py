@@ -11,7 +11,7 @@ _HANDLERS = {
     'lz4': Lz4Tarfile,
 }
 
-_NATIVE_FORMATS = ('gz', 'bz2', 'xz')
+_NATIVE_FORMATS = ('gz', 'bz2', 'xz', 'tar')
 
 SUPPORTED_FORMATS = frozenset(chain(_HANDLERS.keys(), _NATIVE_FORMATS))
 
