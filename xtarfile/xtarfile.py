@@ -2,11 +2,13 @@ from itertools import chain
 from tarfile import open as tarfile_open
 
 from xtarfile.zstd import ZstandardTarfile
+from xtarfile.lz4 import Lz4Tarfile
 
 
 _HANDLERS = {
     'zstd': ZstandardTarfile,
     'zst': ZstandardTarfile,
+    'lz4': Lz4Tarfile,
 }
 
 _NATIVE_FORMATS = ('gz', 'bz2', 'xz')
