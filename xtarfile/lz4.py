@@ -1,7 +1,5 @@
 from contextlib import contextmanager
 from tarfile import open as tarfile_open
-from tempfile import NamedTemporaryFile
-from os import remove as os_remove
 
 try:
     import lz4.frame as lz4
@@ -16,11 +14,11 @@ class Lz4Tarfile:
     @contextmanager
     def read(self, path: str, mode: str):
         with lz4.LZ4FrameFile(path) as lz4d:
-          archive = tarfile_open(mode=mode, fileobj=lz4d, **self.lz4_kwargs)
-          try:
-              yield archive
-          finally:
-              archive.close()
+            archive = tarfile_open(mode=mode, fileobj=lz4d, **self.lz4_kwargs)
+            try:
+                yield archive
+            finally:
+                archive.close()
 
     @contextmanager
     def write(self, path: str, mode: str):
@@ -30,6 +28,7 @@ class Lz4Tarfile:
                 yield archive
             finally:
                 archive.close()
+
 
 if lz4 is None:
     Lz4Tarfile = None  # noqa F811
