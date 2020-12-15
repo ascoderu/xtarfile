@@ -16,7 +16,7 @@ class Lz4Tarfile:
     @contextmanager
     def read(self, path: str, mode: str):
         with lz4.LZ4FrameFile(path) as lz4d:
-          archive = tarfile_open(mode=mode, fileobj=lz4d)
+          archive = tarfile_open(mode=mode, fileobj=lz4d, **self.lz4_kwargs)
           try:
               yield archive
           finally:
@@ -25,7 +25,7 @@ class Lz4Tarfile:
     @contextmanager
     def write(self, path: str, mode: str):
         with lz4.LZ4FrameFile(path, mode=mode) as lz4c:
-            archive = tarfile_open(mode=mode, fileobj=lz4c)
+            archive = tarfile_open(mode=mode, fileobj=lz4c, **self.lz4_kwargs)
             try:
                 yield archive
             finally:
