@@ -25,6 +25,7 @@ setup(
                 'compression formats.',
     long_description=long_description,
     extras_require={
+        'lz4': ['lz4 >= 2.2.1'],
         'zstd': ['zstandard >= 0.10.2']
     },
     python_requires='>=3.4',
