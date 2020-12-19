@@ -1,46 +1,99 @@
-from itertools import chain
-from tarfile import open as tarfile_open
-
-from xtarfile.zstd import ZstandardTarfile
-from xtarfile.lz4 import Lz4Tarfile
+import os
+from builtins import open as _builtin_open
+from tarfile import TarFile, TarInfo, is_tarfile, ReadError, CompressionError
 
 
-_HANDLERS = {
-    'zstd': ZstandardTarfile,
-    'zst': ZstandardTarfile,
-    'lz4': Lz4Tarfile,
-}
+class xtarfile(TarFile):
+    @classmethod
+    def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
+        """Open zstd compressed tar archive name for reading or writing.
+           Appending is not allowed.
+        """
+        if mode not in ("r", "w", "x"):
+            raise ValueError("mode must be 'r', 'w' or 'x'")
 
-_NATIVE_FORMATS = ('gz', 'bz2', 'xz', 'tar')
+        try:
+            import zstandard
+        except ImportError:
+            raise CompressionError("zstandard module is not available")
 
-SUPPORTED_FORMATS = frozenset(chain(_HANDLERS.keys(), _NATIVE_FORMATS))
+        if not (1 <= compresslevel <= 22):
+            raise ValueError("compresslevel must be between 1 and 22")
+
+        if mode == 'r':
+            lmode = "rb"
+            zstd = zstandard.ZstdDecompressor()
+            zststream = zstd.stream_reader
+        elif mode == 'w':
+            lmode = "wb"
+            zstd = zstandard.ZstdCompressor(level=compresslevel)
+            zststream = zstd.stream_writer
+        elif mode == 'x':
+            lmode = "xb"
+            zstd = zstandard.ZstdCompressor(level=compresslevel)
+            zststream = zstd.stream_writer
+        else:
+            raise ValueError("Invalid mode: %r" % (mode,))
+
+        if isinstance(name, (str, bytes, os.PathLike)):
+            fileobj = _builtin_open(name, lmode)
+            zfileobj = zststream(fileobj)
+        elif hasattr(fileobj, "read") or hasattr(fileobj, "write"):
+            zfileobj = zststream(fileobj)
+        else:
+            raise TypeError("filename must be a str, bytes, file or PathLike object")
+
+        try:
+            t = cls.taropen(name, mode, zfileobj, **kwargs)
+        except (OSError, EOFError):
+            if fileobj:
+                fileobj.close()
+            if mode == 'r':
+                raise ReadError("not a zst file")
+            raise
+        except:
+            if fileobj:
+                fileobj.close()
+            raise
+
+        t._extfileobj = False
+        return t
+
+    @classmethod
+    def lz4open(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
+        """Open lz4 compressed tar archive name for reading or writing.
+           Appending is not allowed.
+        """
+        if mode not in ("r", "w", "x"):
+            raise ValueError("mode must be 'r', 'w' or 'x'")
+
+        try:
+            import lz4.frame as lz4
+        except ImportError:
+            raise CompressionError("lz4 module is not available")
+
+        if not (1 <= compresslevel <= 16):
+            raise ValueError("compresslevel must be between 1 and 16")
+
+        fileobj = lz4.LZ4FrameFile(fileobj or name, mode, compression_level=compresslevel)
+
+        try:
+            t = cls.taropen(name, mode, fileobj, **kwargs)
+        except (OSError, EOFError):
+            fileobj.close()
+            if mode == 'r':
+                raise ReadError("not a lz4 file")
+            raise
+        except:
+            fileobj.close()
+            raise
+        t._extfileobj = False
+        return t
 
 
-def get_compression(path: str, mode: str) -> str:
-    for delim in (':', '|'):
-        delim_index = mode.rfind(delim)
-        if delim_index > -1:
-            return mode[delim_index + 1:]
+# When extending register the function here, format is "file extension" : "func"
+xtarfile.OPEN_METH.update({"zst": "zstopen",
+                           "zstd": "zstopen",
+                           "lz4": "lz4open"})
 
-    dot_index = path.rfind('.')
-    if dot_index > -1:
-        return path[dot_index + 1:]
-
-    return ''
-
-
-def xtarfile_open(path: str, mode: str, **kwargs):
-    compression = get_compression(path, mode)
-
-    if not compression or compression in _NATIVE_FORMATS:
-        return tarfile_open(path, mode, **kwargs)
-
-    handler_class = _HANDLERS.get(compression)
-    if handler_class is not None:
-        handler = handler_class(**kwargs)
-        if mode.startswith('r'):
-            return handler.read(path, mode[:2])
-        elif mode.startswith('w'):
-            return handler.write(path, mode[:2])
-
-    raise NotImplementedError
+xtarfile_open = xtarfile.open

@@ -1,3 +1,6 @@
+import setuptools
+setuptools.setup()
+'''
 import io
 
 from setuptools import find_packages
@@ -36,3 +39,4 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Utilities'
     ])
+'''
