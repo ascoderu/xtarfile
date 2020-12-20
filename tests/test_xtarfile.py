@@ -1,5 +1,4 @@
 from io import BytesIO
-from os import remove as os_remove
 import pytest
 import xtarfile
 
@@ -32,8 +31,8 @@ def _test_compression_formats(request, tmp_path):
                 actual_content = buffer1.read()
                 break
 
-    os_remove(ofilename)
     assert actual_content == content
+
 
 def test_a(_test_compression_formats):
     pass
