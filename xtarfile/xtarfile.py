@@ -9,9 +9,6 @@ class xtarfile(TarFile):
         """Open zstd compressed tar archive name for reading or writing.
            Appending is not allowed.
         """
-        if mode not in ("r", "w", "x"):
-            raise ValueError("mode must be 'r', 'w' or 'x'")
-
         try:
             import zstandard
         except ImportError:
@@ -33,7 +30,7 @@ class xtarfile(TarFile):
             zstd = zstandard.ZstdCompressor(level=compresslevel)
             zststream = zstd.stream_writer
         else:
-            raise ValueError("Invalid mode: %r" % (mode,))
+            raise ValueError("mode must be 'r', 'w' or 'x'")
 
         if isinstance(name, (str, bytes, os.PathLike)):
             fileobj = _builtin_open(name, lmode)
@@ -45,13 +42,13 @@ class xtarfile(TarFile):
 
         try:
             t = cls.taropen(name, mode, zfileobj, **kwargs)
-        except (OSError, EOFError):
+        except (OSError, EOFError, zstandard.ZstdError) as err:
             if fileobj:
                 fileobj.close()
-            if mode == 'r':
+            if mode == 'r' and str(err) == "zstd decompress error: Unknown frame descriptor":
                 raise ReadError("not a zst file")
             raise
-        except:
+        except Exception as err:
             if fileobj:
                 fileobj.close()
             raise
@@ -79,12 +76,12 @@ class xtarfile(TarFile):
 
         try:
             t = cls.taropen(name, mode, fileobj, **kwargs)
-        except (OSError, EOFError):
+        except (OSError, EOFError, RuntimeError) as err:
             fileobj.close()
-            if mode == 'r':
+            if mode == 'r' and str(err) == "LZ4F_decompress failed with code: ERROR_frameType_unknown":
                 raise ReadError("not a lz4 file")
             raise
-        except:
+        except Exception as err:
             fileobj.close()
             raise
         t._extfileobj = False
