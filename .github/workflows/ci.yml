@@ -32,5 +32,5 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install lz4 zstandard pytest tox
+      - run: python -m pip install lz4 zstandard pytest tox setuptools wheel
       - run: tox -e py
