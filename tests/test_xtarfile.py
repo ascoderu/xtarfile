@@ -4,7 +4,7 @@ import xtarfile
 
 
 @pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
-def _test_compression_formats(request, tmp_path):
+def _test_all_compression_formats(request, tmp_path):
     wmode = "w:" + request.param
     rmode = "r:" + request.param
     content = b'test content'
@@ -31,8 +31,9 @@ def _test_compression_formats(request, tmp_path):
                 actual_content = buffer1.read()
                 break
 
+    return actual_content, content
+
+
+def test_all_compression_formats(_test_all_compression_formats):
+    actual_content, content = _test_all_compression_formats
     assert actual_content == content
-
-
-def test_a(_test_compression_formats):
-    pass
