@@ -48,7 +48,7 @@ class xtarfile(TarFile):
             if mode == 'r' and str(err) == "zstd decompress error: Unknown frame descriptor":
                 raise ReadError("not a zst file")
             raise
-        except Exception as err:
+        except Exception:
             if fileobj:
                 fileobj.close()
             raise
@@ -81,7 +81,7 @@ class xtarfile(TarFile):
             if mode == 'r' and str(err) == "LZ4F_decompress failed with code: ERROR_frameType_unknown":
                 raise ReadError("not a lz4 file")
             raise
-        except Exception as err:
+        except Exception:
             fileobj.close()
             raise
         t._extfileobj = False

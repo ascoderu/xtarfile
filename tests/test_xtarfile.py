@@ -72,6 +72,7 @@ def _test_reading(request):
 
     return actual_content
 
+
 def test_writing(_test_writing):
     filename, OPEN_METH = _test_writing
     assert filename.is_file() == True
@@ -79,7 +80,7 @@ def test_writing(_test_writing):
 
 
 def test_reading(_test_reading):
-   assert content == _test_reading
+    assert content == _test_reading
 
 
 def test_xwriting_filexists(_test_xwriting_filexists):
@@ -87,7 +88,7 @@ def test_xwriting_filexists(_test_xwriting_filexists):
 
 
 def test_reading_after_xwrite(_test_reading):
-   assert content == _test_reading
+    assert content == _test_reading
 
 
 def test_xwriting_filedoesntexist(_test_xwriting_filedoesntexist):
@@ -95,4 +96,4 @@ def test_xwriting_filedoesntexist(_test_xwriting_filedoesntexist):
 
 
 def test_reading_after_xwrite_2(_test_reading):
-   assert content == _test_reading
+    assert content == _test_reading
