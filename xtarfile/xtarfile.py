@@ -11,7 +11,6 @@ class xtarfile(TarFile):
             filemode, comptype = mode.split("|", 1)
             if comptype in ("zst", "zstd", "lz4"):
                 stream = _Stream(name, filemode, "tar", fileobj, bufsize)
-                print(type(stream))
                 return cls.open(None, filemode + ":" + comptype, stream, bufsize, **kwargs)
             else:
                 return TarFile.open(name, mode, fileobj, bufsize, **kwargs)
