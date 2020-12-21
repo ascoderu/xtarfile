@@ -1,5 +1,5 @@
 import os
-from builtins import open as _builtin_open
+from builtins import open as _builtin_open  # This is needed because otherwise it calls the wrong 'open' function
 from tarfile import TarFile, TarInfo, is_tarfile, ReadError, CompressionError, _Stream
 
 
@@ -13,7 +13,7 @@ class xtarfile(TarFile):
                 stream = _Stream(name, filemode, "tar", fileobj, bufsize)
                 return cls.open(name, filemode + ":" + comptype, stream, bufsize, **kwargs)
             else:
-                if comptype == "gz":  # gz can't handle Path objects, need a String instead
+                if comptype == "gz":  # gz can't handle Path objects, need a String instead, this should be reported upstream.
                     return TarFile.open(str(name), mode, fileobj, bufsize, **kwargs)
                 else:
                     return TarFile.open(name, mode, fileobj, bufsize, **kwargs)
@@ -58,10 +58,11 @@ class xtarfile(TarFile):
 
         try:
             t = cls.taropen(name, mode, zfileobj, **kwargs)
-        except (OSError, EOFError, zstandard.ZstdError) as err:
+        except (OSError, EOFError, zstandard.ZstdError):
             if fileobj:
                 fileobj.close()
-            if mode == 'r' and str(err) == "zstd decompress error: Unknown frame descriptor":
+            # This error is used for handling automatic decommpression handling in mode="r" and "r:*"
+            if mode == 'r':
                 raise ReadError("not a zst file")
             raise
         except Exception:
@@ -92,9 +93,10 @@ class xtarfile(TarFile):
 
         try:
             t = cls.taropen(name, mode, fileobj, **kwargs)
-        except (OSError, EOFError, RuntimeError) as err:
+        except (OSError, EOFError, RuntimeError):
             fileobj.close()
-            if mode == 'r' and str(err) == "LZ4F_decompress failed with code: ERROR_frameType_unknown":
+            # This error is used for handling automatic decommpression handling in mode="r" and "r:*"
+            if mode == 'r':
                 raise ReadError("not a lz4 file")
             raise
         except Exception:
@@ -105,7 +107,18 @@ class xtarfile(TarFile):
         return t
 
 
-# When extending, register the function here, format is "file extension" : "func"
+# When extending, use lz4open as a base. These are the important things to note.
+# Change "import lz4.frame as lz4" to the compression package of your choice. Change the relevant ImportError
+# Change compresslevel/error to whatever is supported by your format.
+# This is the bit that actually does something useful.
+# fileobj = lz4.LZ4FrameFile(fileobj or name, mode, compression_level=compresslevel)
+# As long as fileobj is a valid 'file object' when you hit "t = cls.taropen(name, mode, fileobj, **kwargs)", it should Just Work™
+# Add the error your format raises when it fails to open a file for reading to "except (OSError, EOFError, RuntimeError):"
+# RuntimeError is what lz4 uses and should be removed. Unless that is what your format uses ofcourse :D
+# Register the function down below, format is "file extension" : "func".
+# You don't have to use the file extension. The 'key' part of the dictionary is used when calling xtarfile.open with mode="w:key" or similar
+# See https://docs.python.org/3/library/tarfile.html for more information about modes
+# And lastly, add your format to 'if comptype in ("zst", "zstd", "lz4"):' in xopen()
 xtarfile.OPEN_METH.update({"zst": "zstopen",
                            "zstd": "zstopen",
                            "lz4": "lz4open"})
