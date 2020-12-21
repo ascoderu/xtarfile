@@ -22,6 +22,8 @@ def _test_xwriting_filedoesntexist(request, tmp_path):
         tarinfo.name = filename
         archive.addfile(tarinfo, buffer1)
 
+    return ofilename, request.param
+
 
 @pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
 def _test_xwriting_filexists(request):
@@ -35,7 +37,7 @@ def _test_xwriting_filexists(request):
             tarinfo.size = len(content)
             tarinfo.name = filename
             archive.addfile(tarinfo, buffer1)
-    except FileExistsError:
+    except FileExistsError:  # This should always happen
         return
 
     pytest.fail()
@@ -73,6 +75,7 @@ def _test_reading(request):
     return actual_content
 
 
+# Run the tests
 def test_writing(_test_writing):
     filename, OPEN_METH = _test_writing
     assert filename.is_file() == True
@@ -83,6 +86,7 @@ def test_reading(_test_reading):
     assert content == _test_reading
 
 
+# Make sure opening with 'x' works as expected
 def test_xwriting_filexists(_test_xwriting_filexists):
     pass
 
@@ -91,8 +95,13 @@ def test_reading_after_xwrite(_test_reading):
     assert content == _test_reading
 
 
+testfiles.clear()
+
+
 def test_xwriting_filedoesntexist(_test_xwriting_filedoesntexist):
-    pass
+    filename, OPEN_METH = _test_xwriting_filedoesntexist
+    assert filename.is_file() == True
+    testfiles.update({OPEN_METH: filename})
 
 
 def test_reading_after_xwrite_2(_test_reading):
