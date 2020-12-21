@@ -11,9 +11,12 @@ class xtarfile(TarFile):
             filemode, comptype = mode.split("|", 1)
             if comptype in ("zst", "zstd", "lz4"):
                 stream = _Stream(name, filemode, "tar", fileobj, bufsize)
-                return cls.open(None, filemode + ":" + comptype, stream, bufsize, **kwargs)
+                return cls.open(name, filemode + ":" + comptype, stream, bufsize, **kwargs)
             else:
-                return TarFile.open(name, mode, fileobj, bufsize, **kwargs)
+                if comptype == "gz":  # gz can't handle Path objects, need a String instead
+                    return TarFile.open(str(name), mode, fileobj, bufsize, **kwargs)
+                else:
+                    return TarFile.open(name, mode, fileobj, bufsize, **kwargs)
 
         return cls.open(name, mode, fileobj, bufsize, **kwargs)
 
