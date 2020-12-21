@@ -1,6 +1,6 @@
 import os
 from builtins import open as _builtin_open  # This is needed because otherwise it calls the wrong 'open' function
-from tarfile import TarFile, TarInfo, is_tarfile, ReadError, CompressionError, _Stream
+from tarfile import TarFile, TarInfo, _Stream, ReadError, CompressionError, TarError
 
 
 class xtarfile(TarFile):
@@ -105,6 +105,23 @@ class xtarfile(TarFile):
 
         t._extfileobj = False
         return t
+
+
+# Reimplementation of is_tarfile to use xtarfile instead of tarfile.
+def is_tarfile(name):
+    """Return True if name points to a tar archive that we
+       are able to handle, else return False.
+       'name' should be a string, file, or file-like object.
+    """
+    try:
+        if hasattr(name, "read"):
+            t = xtarfile.open(fileobj=name)
+        else:
+            t = xtarfile.open(name)
+        t.close()
+        return True
+    except TarError:
+        return False
 
 
 # When extending, use lz4open as a base. These are the important things to note.
