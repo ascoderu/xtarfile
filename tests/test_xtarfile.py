@@ -77,7 +77,7 @@ def _test_reading(request):
 
 @pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
 def _test_stream_mode_writing(request, tmp_path):
-    ofilename = str(tmp_path.joinpath("test.tar." + request.param))
+    ofilename = tmp_path.joinpath("test.tar." + request.param)
     with xtarfile.open(name=ofilename, mode="w|" + request.param) as archive:
         buffer1 = BytesIO()
         buffer1.write(content)
@@ -88,10 +88,21 @@ def _test_stream_mode_writing(request, tmp_path):
         tarinfo.name = filename
         archive.addfile(tarinfo, buffer1)
 
+    return ofilename, request.param
+
 
 # Run the tests
 def test_stream_mode_writing(_test_stream_mode_writing):
-    pass
+    filename, OPEN_METH = _test_stream_mode_writing
+    assert filename.is_file() == True
+    testfiles.update({OPEN_METH: filename})
+
+
+def test_reading(_test_reading):
+    assert content == _test_reading
+
+
+testfiles.clear()
 
 
 def test_writing(_test_writing):
