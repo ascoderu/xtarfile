@@ -98,7 +98,7 @@ def test_stream_mode_writing(_test_stream_mode_writing):
     testfiles.update({OPEN_METH: filename})
 
 
-def test_reading(_test_reading):
+def test_reading_stream(_test_reading):
     assert content == _test_reading
 
 
