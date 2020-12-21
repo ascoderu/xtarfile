@@ -40,6 +40,7 @@ def _test_xwriting_filexists(request):
     except FileExistsError:  # This should always happen
         return
 
+    # If it didn't the test fails
     pytest.fail()
 
 
@@ -91,6 +92,11 @@ def _test_stream_mode_writing(request, tmp_path):
     return ofilename, request.param
 
 
+@pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
+def _test_import_is_tarfile(request):
+    return xtarfile.is_tarfile(testfiles[request.param])
+
+
 # Run the tests
 def test_stream_mode_writing(_test_stream_mode_writing):
     filename, OPEN_METH = _test_stream_mode_writing
@@ -115,13 +121,13 @@ def test_reading(_test_reading):
     assert content == _test_reading
 
 
+def test_import_is_tarfile(_test_import_is_tarfile):
+    assert _test_import_is_tarfile == True
+
+
 # Make sure opening with 'x' works as expected
 def test_xwriting_filexists(_test_xwriting_filexists):
     pass
-
-
-def test_reading_after_xwrite(_test_reading):
-    assert content == _test_reading
 
 
 testfiles.clear()
