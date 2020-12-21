@@ -5,6 +5,19 @@ from tarfile import TarFile, TarInfo, is_tarfile, ReadError, CompressionError
 
 class xtarfile(TarFile):
     @classmethod
+    def xopen(cls, name=None, mode="r", fileobj=None, bufsize=10240, **kwargs):
+        # Special handling for streams
+        if "|" in mode:
+            filemode, comptype = mode.split("|", 1)
+            if comptype in ("zst", "zstd", "lz4"):
+                stream = TarFile.open(name, filemode + "|", fileobj, bufsize, **kwargs)
+                return cls.open(name, filemode + ":" + comptype, stream, bufsize, **kwargs)
+            else:
+                return TarFile.open(name, mode, fileobj, bufsize, **kwargs)
+
+        return cls.open(name, mode, fileobj, bufsize, **kwargs)
+
+    @classmethod
     def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
         """Open zstd compressed tar archive name for reading or writing.
            Appending is not allowed.
@@ -84,13 +97,14 @@ class xtarfile(TarFile):
         except Exception:
             fileobj.close()
             raise
+
         t._extfileobj = False
         return t
 
 
-# When extending register the function here, format is "file extension" : "func"
+# When extending, register the function here, format is "file extension" : "func"
 xtarfile.OPEN_METH.update({"zst": "zstopen",
                            "zstd": "zstopen",
                            "lz4": "lz4open"})
 
-xtarfile_open = xtarfile.open
+xtarfile_open = xtarfile.xopen
