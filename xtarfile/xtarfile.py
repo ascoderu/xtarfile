@@ -112,7 +112,6 @@ def stream_init_overload(self, name, mode, comptype, fileobj, bufsize):
                 self.cmp = LZ4FrameCompressor()
                 self.fileobj.write((self.cmp.begin()))
 
-
         elif comptype != "tar":
             raise CompressionError("unknown compression type %r" % comptype)
 
