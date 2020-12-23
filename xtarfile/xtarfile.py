@@ -1,7 +1,29 @@
 import os
 from builtins import open as _builtin_open  # This is needed because otherwise it calls the wrong 'open' function
-from tarfile import TarFile, TarInfo, _Stream, ReadError, CompressionError, TarError
+from tarfile import TarFile, TarInfo, _Stream, _StreamProxy, _LowLevelFile, ReadError, CompressionError, TarError
+from types import MethodType
 
+
+def getcomptype(self):
+    if self.buf.startswith(b"\x1f\x8b\x08"):
+        return "gz"
+    elif self.buf[0:3] == b"BZh" and self.buf[4:10] == b"1AY&SY":
+        return "bz2"
+    elif self.buf.startswith((b"\x5d\x00\x00\x80", b"\xfd7zXZ")):
+        return "xz"
+    elif self.buf.startswith(b"\x28\xB5\x2F\xFD"):
+        return "zst"
+    elif self.buf.startswith(b"\x04\x22\x4D\x18"):
+        return "lz4"
+    else:
+        return "tar"
+
+
+
+def seekable(self):
+    return True
+
+_Stream.seekable = MethodType(seekable, _Stream)
 
 class xtarfile(TarFile):
     @classmethod
@@ -10,6 +32,28 @@ class xtarfile(TarFile):
         if "|" in mode:
             filemode, comptype = mode.split("|", 1)
             if comptype in ("zst", "zstd", "lz4"):
+                stream = _Stream(name, filemode, "tar", fileobj, bufsize)
+                return cls.open(name, filemode + ":" + comptype, stream, bufsize, **kwargs)
+            elif comptype == "*":
+                if not fileobj:
+                    lfileobj = _LowLevelFile(name, filemode)
+                    stream_proxy = _StreamProxy(lfileobj)
+                    _StreamProxy.getcomptype = MethodType(getcomptype, stream_proxy)
+                    if stream_proxy.getcomptype() in ("gz", "bz2", "xz", "tar"):
+                        stream_proxy.close()
+                        return TarFile.open(str(name), mode, fileobj, bufsize, **kwargs)
+                    elif stream_proxy.getcomptype() in ("zst", "zstd"):
+                        import zstandard
+                        dctx = zstandard.ZstdDecompressor()
+                        fileobj = dctx.stream_reader(stream_proxy)
+                        return TarFile.open(name, "r|", fileobj, bufsize, **kwargs)
+                    elif stream_proxy.getcomptype() == "lz4":
+                        import lz4.frame as lz4
+                        fileobj = lz4.LZ4FrameFile(stream_proxy, filemode)
+                        return TarFile.open(name, "r|", fileobj, bufsize, **kwargs)
+                else:
+                    return TarFile.open(str(name), mode, fileobj, bufsize, **kwargs)
+
                 stream = _Stream(name, filemode, "tar", fileobj, bufsize)
                 return cls.open(name, filemode + ":" + comptype, stream, bufsize, **kwargs)
             else:
@@ -123,6 +167,37 @@ def is_tarfile(name):
     except TarError:
         return False
 
+'''
+class _StreamProxy(object):
+    """Small proxy class that enables transparent compression
+       detection for the Stream interface (mode 'r|*').
+    """
+
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+        self.buf = self.fileobj.read(10240)
+
+    def read(self, size):
+        self.read = self.fileobj.read
+        return self.buf
+
+    def getcomptype(self):
+        if self.buf.startswith(b"\x1f\x8b\x08"):
+            return "gz"
+        elif self.buf[0:3] == b"BZh" and self.buf[4:10] == b"1AY&SY":
+            return "bz2"
+        elif self.buf.startswith((b"\x5d\x00\x00\x80", b"\xfd7zXZ")):
+            return "xz"
+        elif self.buf.startswith(b"\x28\xB5\x2F\xFD"):
+            return "zst"
+        elif self.buf.startswith(b"\x04\x22\x4D\x18"):
+            return "lz4"
+        else:
+            return "tar"
+
+    def close(self):
+        self.fileobj.close()
+'''
 
 # When extending, use lz4open as a base. These are the important things to note.
 # Change "import lz4.frame as lz4" to the compression package of your choice. Change the relevant ImportError
