@@ -159,9 +159,9 @@ def is_tarfile(name):
     """
     try:
         if hasattr(name, "read"):
-            t = xtarfile.open(fileobj=name)
+            t = xtarfile.xopen(fileobj=name)
         else:
-            t = xtarfile.open(name)
+            t = xtarfile.xopen(name)
         t.close()
         return True
     except TarError:
