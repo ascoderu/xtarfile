@@ -127,16 +127,6 @@ _Stream.__init__ = stream_init_overload
 
 class xtarfile(TarFile):
     @classmethod
-    def xopen(cls, name=None, mode="r", fileobj=None, bufsize=RECORDSIZE, **kwargs):
-        # Special handling for streams
-        if "|" in mode:
-            filemode, comptype = mode.split("|", 1)
-            if comptype == 'gz':  # gz expects name to be a string. Likely an oversight. Should be reported upstream.
-                name = str(name)
-
-        return cls.open(name, mode, fileobj, bufsize, **kwargs)
-
-    @classmethod
     def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
         """Open zstd compressed tar archive name for reading or writing.
            Appending is not allowed.
@@ -231,9 +221,9 @@ def is_tarfile(name):
     """
     try:
         if hasattr(name, "read"):
-            t = xtarfile.xopen(fileobj=name)
+            t = xtarfile.open(fileobj=name)
         else:
-            t = xtarfile.xopen(name)
+            t = xtarfile.open(name)
         t.close()
         return True
     except TarError:
@@ -244,4 +234,4 @@ xtarfile.OPEN_METH.update({"zst": "zstopen",
                            "zstd": "zstopen",
                            "lz4": "lz4open"})
 
-xtarfile_open = xtarfile.xopen
+xtarfile_open = xtarfile.open
