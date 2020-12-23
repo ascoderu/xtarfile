@@ -93,6 +93,36 @@ def _test_stream_mode_writing(request, tmp_path):
 
 
 @pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
+def _test_stream_mode_reading(request):
+    with xtarfile.open(name=testfiles[request.param], mode="r|" + request.param) as archive:
+        while True:
+            member = archive.next()
+            if member is None:
+                pytest.fail('{} not found in archive'.format(filename))
+            if member.name == filename:
+                buffer1 = archive.extractfile(member)
+                actual_content = buffer1.read()
+                break
+
+    return actual_content
+
+
+@pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
+def _test_stream_mode_reading_auto(request):
+    with xtarfile.open(name=testfiles[request.param], mode="r|*") as archive:
+        while True:
+            member = archive.next()
+            if member is None:
+                pytest.fail('{} not found in archive'.format(filename))
+            if member.name == filename:
+                buffer1 = archive.extractfile(member)
+                actual_content = buffer1.read()
+                break
+
+    return actual_content
+
+
+@pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
 def _test_import_is_tarfile(request):
     return xtarfile.is_tarfile(testfiles[request.param])
 
@@ -104,8 +134,16 @@ def test_stream_mode_writing(_test_stream_mode_writing):
     testfiles.update({OPEN_METH: filename})
 
 
-def test_reading_stream(_test_reading):
+def test_reading_stream_created_files(_test_reading):
     assert content == _test_reading
+
+
+def test_stream_mode_reading(_test_stream_mode_reading):
+    assert content == _test_stream_mode_reading
+
+
+def test_stream_mode_reading_auto(_test_stream_mode_reading_auto):
+    assert content == _test_stream_mode_reading_auto
 
 
 testfiles.clear()
