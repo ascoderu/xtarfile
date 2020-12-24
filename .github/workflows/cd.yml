@@ -16,7 +16,7 @@ jobs:
           python-version: 3.8
       - run: echo "${GITHUB_REF##*/}" > version.txt
       - run: pip install twine
-      - run: python setup.py sdist
+      - run: python setup.py sdist bdist_wheel
       - run: twine upload --skip-existing ./dist/*
         env:
           TWINE_USERNAME: ascoderu
