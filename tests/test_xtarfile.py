@@ -7,11 +7,13 @@ testfiles = dict()
 STREAM_OPEN_METHODS = list()
 content = b'test content'
 filename = 'archived-file.txt'
+
 for method in xtarfile.xtarfile.OPEN_METH.keys():
     if method == 'gz':
         STREAM_OPEN_METHODS.append(pytest.param(method, marks=pytest.mark.xfail(reason="compression GZ doesn't support PathLike objects and thus creates no files", strict=True)))
     else:
         STREAM_OPEN_METHODS.append(method)
+
 
 @pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
 def _test_xwriting_filedoesntexist(request, tmp_path):
@@ -114,7 +116,6 @@ def _test_stream_mode_reading(request):
                 break
 
     return actual_content
-
 
 
 @pytest.fixture(params=STREAM_OPEN_METHODS)
