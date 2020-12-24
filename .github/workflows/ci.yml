@@ -33,5 +33,5 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install lz4 zstandard pytest tox setuptools wheel
-      - run: echo "${GITHUB_REF##*/}" > version.txt
+      - run: echo "0.0.dev" > version.txt
       - run: tox -e py
