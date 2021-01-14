@@ -1,7 +1,6 @@
-import os
 import pathlib
 import importlib
-from tarfile import TarFile, TarInfo, _Stream, _StreamProxy, _LowLevelFile, ReadError, CompressionError, TarError, RECORDSIZE
+from tarfile import TarFile, TarInfo, _Stream, _StreamProxy, _LowLevelFile, CompressionError, TarError  # noqa: F401
 
 
 # Replace _StreamProxy.getcomptype with custom version to handle our formats
@@ -38,14 +37,14 @@ def stream_init_overload(self, name, mode, comptype, fileobj, bufsize):
         fileobj = _StreamProxy(fileobj)
         comptype = fileobj.getcomptype()
 
-    self.name     = name or ""
-    self.mode     = mode
+    self.name = name or ""
+    self.mode = mode
     self.comptype = comptype
-    self.fileobj  = fileobj
-    self.bufsize  = bufsize
-    self.buf      = b""
-    self.pos      = 0
-    self.closed   = False
+    self.fileobj = fileobj
+    self.bufsize = bufsize
+    self.buf = b""
+    self.pos = 0
+    self.closed = False
 
     try:
         if comptype == "gz":
@@ -113,7 +112,7 @@ def stream_init_overload(self, name, mode, comptype, fileobj, bufsize):
         elif comptype != "tar":
             raise CompressionError("unknown compression type %r" % comptype)
 
-    except:
+    except:  # noqa: 722
         if not self._extfileobj:
             self.fileobj.close()
         self.closed = True
@@ -126,7 +125,10 @@ _Stream.__init__ = stream_init_overload
 # Make a list of all the compression formats in 'formats/' and add them as subclasses to xtarfile
 subclasses = (TarFile,)
 cf = {}  # Dictionary for filename : compress_function pairs
-formats_path = pathlib.Path(__file__).parent / 'formats'  # Get path of xtarfile.py and add the formats directory to the end
+
+# Get path of xtarfile.py and add the formats directory to the end
+formats_path = pathlib.Path(__file__).parent / 'formats'
+
 for f in formats_path.iterdir():
     if f.is_file() and f.suffix == ".py":  # Make sure it's a python source file
         # Import the file, get compdict from it, add class to subclasses.
@@ -140,6 +142,7 @@ xtarfile = type("xtarfile", subclasses, dict())
 
 # Add our compression formats to the OPEN_METH dictionary
 xtarfile.OPEN_METH.update(cf)
+
 
 # Reimplementation of is_tarfile to use xtarfile instead of tarfile.
 def is_tarfile(name):

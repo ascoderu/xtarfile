@@ -1,9 +1,9 @@
-import os
 from tarfile import ReadError, CompressionError
 
 
 # Dictionary format: 'file suffix' : 'open function'
 compdict = {'lz4': 'lz4open'}
+
 
 class lz4():
     @classmethod

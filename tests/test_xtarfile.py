@@ -10,7 +10,8 @@ filename = 'archived-file.txt'
 
 for method in xtarfile.xtarfile.OPEN_METH.keys():
     if method == 'gz':
-        STREAM_OPEN_METHODS.append(pytest.param(method, marks=pytest.mark.xfail(reason="compression GZ doesn't support PathLike objects and thus creates no files", strict=True)))
+        STREAM_OPEN_METHODS.append(pytest.param(method, marks=pytest.mark.xfail(
+            reason="compression GZ doesn't support PathLike objects and thus creates no files", strict=True)))
     else:
         STREAM_OPEN_METHODS.append(method)
 
@@ -146,12 +147,12 @@ def _test_import_is_tarfile_after_stream(request):
 # Run the tests
 def test_stream_mode_writing(_test_stream_mode_writing):
     filename, OPEN_METH = _test_stream_mode_writing
-    assert filename.is_file() == True
+    assert filename.is_file() == True  # noqa: E712
     testfiles.update({OPEN_METH: filename})
 
 
 def test_import_is_tarfile_after_stream(_test_import_is_tarfile_after_stream):
-    assert _test_import_is_tarfile_after_stream == True
+    assert _test_import_is_tarfile_after_stream == True  # noqa: E712
 
 
 def test_reading_stream_created_files(_test_reading):
@@ -171,12 +172,12 @@ testfiles.clear()
 
 def test_writing(_test_writing):
     filename, OPEN_METH = _test_writing
-    assert filename.is_file() == True
+    assert filename.is_file() == True  # noqa: E712
     testfiles.update({OPEN_METH: filename})
 
 
 def test_import_is_tarfile_after_writing(_test_import_is_tarfile):
-    assert _test_import_is_tarfile == True
+    assert _test_import_is_tarfile == True  # noqa: E712
 
 
 def test_reading(_test_reading):
@@ -193,12 +194,12 @@ testfiles.clear()
 
 def test_xwriting_filedoesntexist(_test_xwriting_filedoesntexist):
     filename, OPEN_METH = _test_xwriting_filedoesntexist
-    assert filename.is_file() == True
+    assert filename.is_file() == True  # noqa: E712
     testfiles.update({OPEN_METH: filename})
 
 
 def test_import_is_tarfile_after_xwriting(_test_import_is_tarfile):
-    assert _test_import_is_tarfile == True
+    assert _test_import_is_tarfile == True  # noqa: E712
 
 
 def test_reading_after_xwrite_2(_test_reading):

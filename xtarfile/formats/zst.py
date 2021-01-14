@@ -6,6 +6,7 @@ from tarfile import ReadError, CompressionError
 compdict = {'zst': 'zstopen',
             'zstd': 'zstopen'}
 
+
 class zst():
     @classmethod
     def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
