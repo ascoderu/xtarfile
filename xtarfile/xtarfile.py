@@ -1,7 +1,7 @@
 import os
-from builtins import open as _builtin_open  # This is needed because otherwise it calls the wrong 'open' function
+import pathlib
+import importlib
 from tarfile import TarFile, TarInfo, _Stream, _StreamProxy, _LowLevelFile, ReadError, CompressionError, TarError, RECORDSIZE
-import struct
 
 
 # Replace _StreamProxy.getcomptype with custom version to handle our formats
@@ -92,12 +92,10 @@ def stream_init_overload(self, name, mode, comptype, fileobj, bufsize):
                 raise CompressionError("lzma module is not available")
             if mode == "r":
                 self.dbuf = b""
-                dctx = zstandard.ZstdDecompressor()
-                self.cmp = dctx.decompressobj()
+                self.cmp = zstandard.ZstdDecompressor().decompressobj()
                 self.exception = zstandard.ZstdError
             else:
-                dctx = zstandard.ZstdCompressor()
-                self.cmp = dctx.compressobj()
+                self.cmp = zstandard.ZstdCompressor().compressobj()
 
         elif comptype == "lz4":
             try:
@@ -125,92 +123,17 @@ def stream_init_overload(self, name, mode, comptype, fileobj, bufsize):
 _Stream.__init__ = stream_init_overload
 
 
-class xtarfile(TarFile):
-    @classmethod
-    def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
-        """Open zstd compressed tar archive name for reading or writing.
-           Appending is not allowed.
-        """
-        try:
-            import zstandard
-        except ImportError:
-            raise CompressionError("zstandard module is not available")
+# Make a list of all the compression formats in 'formats/' and add them as subclasses to xtarfile
+subclasses = (TarFile,)
+formats_path = pathlib.Path(__file__).parent / 'formats'  # Get path of xtarfile.py and add the formats directory to the end
+for f in formats_path.iterdir():
+    if f.is_file() and f.suffix == ".py":  # Make sure it's a python source file
+        # Import the file, get the class from it, put it in subclasses.
+        subclasses = subclasses + (getattr(importlib.import_module("." + f.stem, 'xtarfile.formats'), f.stem),)
 
-        if not (1 <= compresslevel <= 22):
-            raise ValueError("compresslevel must be between 1 and 22")
 
-        if mode == 'r':
-            lmode = "rb"
-            zstd = zstandard.ZstdDecompressor()
-            zststream = zstd.stream_reader
-        elif mode == 'w':
-            lmode = "wb"
-            zstd = zstandard.ZstdCompressor(level=compresslevel)
-            zststream = zstd.stream_writer
-        elif mode == 'x':
-            lmode = "xb"
-            zstd = zstandard.ZstdCompressor(level=compresslevel)
-            zststream = zstd.stream_writer
-        else:
-            raise ValueError("mode must be 'r', 'w' or 'x'")
-
-        if isinstance(name, (str, bytes, os.PathLike)):
-            fileobj = _builtin_open(name, lmode)
-            zfileobj = zststream(fileobj)
-        elif hasattr(fileobj, "read") or hasattr(fileobj, "write"):
-            zfileobj = zststream(fileobj)
-        else:
-            raise TypeError("filename must be a str, bytes, file or PathLike object")
-
-        try:
-            t = cls.taropen(name, mode, zfileobj, **kwargs)
-        except (OSError, EOFError, zstandard.ZstdError):
-            if fileobj:
-                fileobj.close()
-            # This error is used for handling automatic decommpression handling in mode="r" and "r:*"
-            if mode == 'r':
-                raise ReadError("not a zst file")
-            raise
-        except Exception:
-            if fileobj:
-                fileobj.close()
-            raise
-
-        t._extfileobj = False
-        return t
-
-    @classmethod
-    def lz4open(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
-        """Open lz4 compressed tar archive name for reading or writing.
-           Appending is not allowed.
-        """
-        if mode not in ("r", "w", "x"):
-            raise ValueError("mode must be 'r', 'w' or 'x'")
-
-        try:
-            import lz4.frame as lz4
-        except ImportError:
-            raise CompressionError("lz4 module is not available")
-
-        if not (1 <= compresslevel <= 16):
-            raise ValueError("compresslevel must be between 1 and 16")
-
-        fileobj = lz4.LZ4FrameFile(fileobj or name, mode, compression_level=compresslevel)
-
-        try:
-            t = cls.taropen(name, mode, fileobj, **kwargs)
-        except (OSError, EOFError, RuntimeError):
-            fileobj.close()
-            # This error is used for handling automatic decommpression handling in mode="r" and "r:*"
-            if mode == 'r':
-                raise ReadError("not a lz4 file")
-            raise
-        except Exception:
-            fileobj.close()
-            raise
-
-        t._extfileobj = False
-        return t
+# Construct xtarfile class
+xtarfile = type("xtarfile", subclasses, dict())
 
 
 # Reimplementation of is_tarfile to use xtarfile instead of tarfile.
