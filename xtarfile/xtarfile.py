@@ -129,10 +129,10 @@ cf = {}  # Dictionary for filename : compress_function pairs
 formats_path = pathlib.Path(__file__).parent / 'formats'  # Get path of xtarfile.py and add the formats directory to the end
 for f in formats_path.iterdir():
     if f.is_file() and f.suffix == ".py":  # Make sure it's a python source file
-        # Import the file, get compdict from it
-        cf.update(getattr(importlib.import_module("." + f.stem, 'xtarfile.formats'), 'compdict'))
-        # Import the file, get the class from it, put it in subclasses.
-        subclasses = subclasses + (getattr(importlib.import_module("." + f.stem, 'xtarfile.formats'), f.stem),)
+        # Import the file, get compdict from it, add class to subclasses.
+        compmod = importlib.import_module("." + f.stem, 'xtarfile.formats')
+        cf.update(getattr(compmod, 'compdict'))
+        subclasses = subclasses + (getattr(compmod, f.stem),)
 
 
 # Construct xtarfile class
