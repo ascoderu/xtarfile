@@ -125,9 +125,12 @@ _Stream.__init__ = stream_init_overload
 
 # Make a list of all the compression formats in 'formats/' and add them as subclasses to xtarfile
 subclasses = (TarFile,)
+cf = {}  # Dictionary for filename : compress_function pairs
 formats_path = pathlib.Path(__file__).parent / 'formats'  # Get path of xtarfile.py and add the formats directory to the end
 for f in formats_path.iterdir():
     if f.is_file() and f.suffix == ".py":  # Make sure it's a python source file
+        # Import the file, get compdict from it
+        cf.update(getattr(importlib.import_module("." + f.stem, 'xtarfile.formats'), 'compdict'))
         # Import the file, get the class from it, put it in subclasses.
         subclasses = subclasses + (getattr(importlib.import_module("." + f.stem, 'xtarfile.formats'), f.stem),)
 
@@ -135,6 +138,8 @@ for f in formats_path.iterdir():
 # Construct xtarfile class
 xtarfile = type("xtarfile", subclasses, dict())
 
+# Add our compression formats to the OPEN_METH dictionary
+xtarfile.OPEN_METH.update(cf)
 
 # Reimplementation of is_tarfile to use xtarfile instead of tarfile.
 def is_tarfile(name):
@@ -152,9 +157,5 @@ def is_tarfile(name):
     except TarError:
         return False
 
-
-xtarfile.OPEN_METH.update({"zst": "zstopen",
-                           "zstd": "zstopen",
-                           "lz4": "lz4open"})
 
 xtarfile_open = xtarfile.open

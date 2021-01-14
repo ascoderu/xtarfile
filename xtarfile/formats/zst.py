@@ -2,6 +2,10 @@ import os
 from tarfile import ReadError, CompressionError
 
 
+# Dictionary format: 'file suffix' : 'open function'
+compdict = {'zst': 'zstopen',
+            'zstd': 'zstopen'}
+
 class zst():
     @classmethod
     def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
