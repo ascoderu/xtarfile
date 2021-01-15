@@ -11,25 +11,24 @@ import inspect
 streaminitfunction, lines = inspect.getsourcelines(_Stream.__init__)
 
 # Remove indendation, it's a class function but our overload is not.
-streaminitfunction = [l[4:] for l in streaminitfunction]
+streaminitfunction = [lines[4:] for lines in streaminitfunction]
 
-# Replace function name with stream_init_overload. 
+# Replace function name with stream_init_overload.
 streaminitfunction[0] = "def stream_init_overload(self, name, mode, comptype, fileobj, bufsize):\n"
 
 
 # Replace _StreamProxy.getcomptype with custom version to handle our formats
 # This is used to dynamically add code to the function
 # This a copy of the original function from _StreamProxy
-comptypefunction = [
-'def getcomptype(self):',
-'  if self.buf.startswith(b"\\x1f\\x8b\\x08"):',
-'    return "gz"',
-'  elif self.buf[0:3] == b"BZh" and self.buf[4:10] == b"1AY&SY":',
-'    return "bz2"',
-'  elif self.buf.startswith((b"\\x5d\\x00\\x00\\x80", b"\\xfd7zXZ")):',
-'    return "xz"',
-'  else:',
-'    return "tar"']
+comptypefunction = ['def getcomptype(self):',
+                    '  if self.buf.startswith(b"\\x1f\\x8b\\x08"):',
+                    '    return "gz"',
+                    '  elif self.buf[0:3] == b"BZh" and self.buf[4:10] == b"1AY&SY":',
+                    '    return "bz2"',
+                    '  elif self.buf.startswith((b"\\x5d\\x00\\x00\\x80", b"\\xfd7zXZ")):',
+                    '    return "xz"',
+                    '  else:',
+                    '    return "tar"']
 
 
 # Make a list of all the compression formats in 'formats/' and add them as subclasses to xtarfile
@@ -50,7 +49,7 @@ for f in formats_path.iterdir():
         # Get magicbytes for 'getcomptype' function for Stream mode
         magicbytes = getattr(compmod, 'magicbytes')
         comptypefunction.insert(7, magicbytes)
-        
+
         # Get _Stream.__init__ code and add it to our function
         streaminit = getattr(compmod, 'streaminit')
         streaminitfunction[60:60] = streaminit
@@ -68,15 +67,12 @@ xtarfile.OPEN_METH.update(cf)
 
 # Compile and overload _StreamProxy.getcomptype
 exec("\n".join(comptypefunction))
-_StreamProxy.getcomptype = getcomptype
+_StreamProxy.getcomptype = getcomptype  # noqa: F821
 
 
-#for idx, line in enumerate(streaminitfunction):
-    #print(idx, line)
-#print("".join(streaminitfunction))
 # Compile and overload _Stream.__init__
 exec("".join(streaminitfunction))
-_Stream.__init__ = stream_init_overload
+_Stream.__init__ = stream_init_overload  # noqa: F821
 
 
 # Reimplementation of is_tarfile to use xtarfile instead of tarfile.

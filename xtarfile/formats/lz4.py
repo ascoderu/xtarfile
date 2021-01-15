@@ -9,19 +9,18 @@ magicbytes = '  elif self.buf.startswith(b"\\x04\\x22\\x4D\\x18"): return "lz4"'
 
 # _Stream.__init__ overload, remember to end lines with \n
 # Don't mess up the indentation
-streaminit = [
-'        elif comptype == "lz4":\n',
-'            try:\n',
-'                from lz4.frame import LZ4FrameCompressor, LZ4FrameDecompressor\n',
-'            except ImportError:\n',
-'                raise CompressionError("lz4 module is not available")\n',
-'            if mode == "r":\n',
-'                self.dbuf = b""\n',
-'                self.cmp = LZ4FrameDecompressor()\n',
-'                self.exception = RuntimeError\n',
-'            else:\n',
-'                self.cmp = LZ4FrameCompressor()\n',
-'                self.fileobj.write((self.cmp.begin()))\n']
+streaminit = ['        elif comptype == "lz4":\n',
+              '            try:\n',
+              '                from lz4.frame import LZ4FrameCompressor, LZ4FrameDecompressor\n',
+              '            except ImportError:\n',
+              '                raise CompressionError("lz4 module is not available")\n',
+              '            if mode == "r":\n',
+              '                self.dbuf = b""\n',
+              '                self.cmp = LZ4FrameDecompressor()\n',
+              '                self.exception = RuntimeError\n',
+              '            else:\n',
+              '                self.cmp = LZ4FrameCompressor()\n',
+              '                self.fileobj.write((self.cmp.begin()))\n']
 
 
 class lz4():
