@@ -7,6 +7,23 @@ compdict = {'zst': 'zstopen',
             'zstd': 'zstopen'}
 
 
+magicbytes = '  elif self.buf.startswith(b"\\x28\\xB5\\x2F\\xFD"): return "zst"'
+
+
+streaminit = [
+'        elif comptype in ("zst", "zstd"):\n',
+'            try:\n',
+'                import zstandard\n',
+'            except ImportError:\n',
+'                raise CompressionError("lzma module is not available")\n',
+'            if mode == "r":\n',
+'                self.dbuf = b""\n',
+'                self.cmp = zstandard.ZstdDecompressor().decompressobj()\n',
+'                self.exception = zstandard.ZstdError\n',
+'            else:\n',
+'                self.cmp = zstandard.ZstdCompressor().compressobj()\n']
+
+
 class zst():
     @classmethod
     def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
