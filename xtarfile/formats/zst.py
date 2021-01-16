@@ -7,9 +7,13 @@ compdict = {'zst': 'zstopen',
             'zstd': 'zstopen'}
 
 
-magicbytes = '  elif self.buf.startswith(b"\\x28\\xB5\\x2F\\xFD"): return "zst"'
+# This variable is used to overload _StreamProxy.getcomptype with additional formats
+# Make sure indentation is correct and that the line ends with '\n'
+getcomptype = '    elif self.buf.startswith(b"\\x28\\xB5\\x2F\\xFD"): return "zst"\n'
 
 
+# This variable is used to overload _Stream.__init__ with additional formats
+# Make sure indentation is correct and that all lines end with '\n'
 streaminit = ['        elif comptype in ("zst", "zstd"):\n',
               '            try:\n',
               '                import zstandard\n',
@@ -23,12 +27,15 @@ streaminit = ['        elif comptype in ("zst", "zstd"):\n',
               '                self.cmp = zstandard.ZstdCompressor().compressobj()\n']
 
 
+# This will be used as a subclass in xtarfile
 class zst():
     @classmethod
     def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
         """Open zstd compressed tar archive name for reading or writing.
            Appending is not allowed.
         """
+        # If you need to change this code significatly remember to still raise the errors.
+        # It is required by the baseclass.
         try:
             import zstandard
         except ImportError:
@@ -62,10 +69,13 @@ class zst():
 
         try:
             t = cls.taropen(name, mode, zfileobj, **kwargs)
+
+        # This error is used for handling automatic decommpression in mode="r" and "r:*"
+        # zstandard.ZstdError is the error zstandard uses for this. Change it to whatever your format is using.
         except (OSError, EOFError, zstandard.ZstdError):
+            # This check is needed because zst raises an error if you close a closed file
             if fileobj:
                 fileobj.close()
-            # This error is used for handling automatic decommpression handling in mode="r" and "r:*"
             if mode == 'r':
                 raise ReadError("not a zst file")
             raise
