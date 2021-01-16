@@ -2,6 +2,7 @@ import os
 from tarfile import ReadError, CompressionError
 
 
+# This variable is used to register new compression functions in the Tarfile class
 # Dictionary format: 'file suffix' : 'open function'
 compdict = {'zst': 'zstopen',
             'zstd': 'zstopen'}

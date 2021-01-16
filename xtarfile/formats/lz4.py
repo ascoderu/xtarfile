@@ -4,6 +4,7 @@ from tarfile import ReadError, CompressionError
 # If you want to extend with additional formats use this file as an example!
 
 
+# This variable is used to register new compression functions in the Tarfile class
 # Dictionary format: 'file suffix' : 'open function'
 compdict = {'lz4': 'lz4open'}
 
