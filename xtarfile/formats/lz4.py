@@ -30,7 +30,7 @@ streaminit = ['        elif comptype == "lz4":\n',
 
 
 # This will be used as a subclass in xtarfile
-class lz4():
+class lz4:
     @classmethod
     def lz4open(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
         """Open lz4 compressed tar archive name for reading or writing.

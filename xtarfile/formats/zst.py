@@ -28,7 +28,7 @@ streaminit = ['        elif comptype in ("zst", "zstd"):\n',
 
 
 # This will be used as a subclass in xtarfile
-class zst():
+class zst:
     @classmethod
     def zstopen(cls, name, mode="r", fileobj=None, compresslevel=9, **kwargs):
         """Open zstd compressed tar archive name for reading or writing.
