@@ -93,3 +93,19 @@ def is_tarfile(name):
 
 
 xtarfile_open = xtarfile.open
+
+
+# Needed for old tests
+SUPPORTED_FORMATS = xtarfile.OPEN_METH
+
+def get_compression(path: str, mode: str) -> str:
+    for delim in (':', '|'):
+        delim_index = mode.rfind(delim)
+        if delim_index > -1:
+            return mode[delim_index + 1:]
+
+    dot_index = path.rfind('.')
+    if dot_index > -1:
+        return path[dot_index + 1:]
+
+    return ''

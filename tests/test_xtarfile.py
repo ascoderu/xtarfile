@@ -1,206 +1,103 @@
 from io import BytesIO
-import pytest
-import xtarfile
+from itertools import product
+from os import close
+from os import remove
+from tarfile import TarInfo
+from tempfile import mkstemp
+from unittest import TestCase
+
+from xtarfile.xtarfile import SUPPORTED_FORMATS
+from xtarfile.xtarfile import get_compression
+from xtarfile.xtarfile import xtarfile_open
 
 
-testfiles = dict()
-STREAM_OPEN_METHODS = list()
-content = b'test content'
-filename = 'archived-file.txt'
+class FileExtensionIdContext:
+    def __init__(self, test_case, compressor):
+        self.test_case = test_case
+        self.extension = '.{}'.format(compressor)
 
-for method in xtarfile.xtarfile.OPEN_METH.keys():
-    if method == 'gz':
-        STREAM_OPEN_METHODS.append(pytest.param(method, marks=pytest.mark.xfail(
-            reason="compression GZ doesn't support PathLike objects and thus creates no files", strict=True)))
-    else:
-        STREAM_OPEN_METHODS.append(method)
+    def __str__(self):
+        return self.__class__.__name__
 
+    def given_file(self):
+        return self.test_case.given_file(suffix=self.extension)
 
-@pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
-def _test_xwriting_filedoesntexist(request, tmp_path):
-    ofilename = tmp_path.joinpath("test.tar." + request.param)
-
-    with xtarfile.open(name=ofilename, mode="x:" + request.param) as archive:
-        buffer1 = BytesIO()
-        buffer1.write(content)
-        buffer1.seek(0)
-
-        tarinfo = xtarfile.TarInfo()
-        tarinfo.size = len(content)
-        tarinfo.name = filename
-        archive.addfile(tarinfo, buffer1)
-
-    return ofilename, request.param
+    @classmethod
+    def mode(cls, mode):
+        return mode
 
 
-@pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
-def _test_xwriting_filexists(request):
-    try:
-        with xtarfile.open(name=testfiles[request.param], mode="x:" + request.param) as archive:
-            buffer1 = BytesIO()
-            buffer1.write(content)
-            buffer1.seek(0)
+class ExplicitOpenIdContext:
+    def __init__(self, test_case, compressor):
+        self.test_case = test_case
+        self.compressor = compressor
 
-            tarinfo = xtarfile.TarInfo()
+    def __str__(self):
+        return self.__class__.__name__
+
+    def given_file(self):
+        return self.test_case.given_file(suffix='')
+
+    def mode(self, mode):
+        return '{}|{}'.format(mode, self.compressor)
+
+
+class GetCompressionTests(TestCase):
+    def test_prefers_explicit_open_mode(self):
+        compression = get_compression('foo.tar.gz', 'r:bz2')
+        self.assertEqual(compression, 'bz2')
+
+    def test_falls_back_to_extension(self):
+        compression = get_compression('foo.tar.gz', 'r')
+        self.assertEqual(compression, 'gz')
+
+
+class OpenTests(TestCase):
+    def test_roundtrip(self):
+        contexts = (ExplicitOpenIdContext, FileExtensionIdContext)
+
+        for compressor, ctx in product(SUPPORTED_FORMATS, contexts):
+            context = ctx(self, compressor)
+            with self.subTest(compressor=compressor, context=str(context)):
+                self._test_roundtrip(context)
+
+    def _test_roundtrip(self, context):
+        path = context.given_file()
+        content = b'test content'
+        filename = 'archived-file.txt'
+
+        with xtarfile_open(path, context.mode('w')) as archive:
+            buffer = BytesIO()
+            buffer.write(content)
+            buffer.seek(0)
+
+            tarinfo = TarInfo()
             tarinfo.size = len(content)
             tarinfo.name = filename
-            archive.addfile(tarinfo, buffer1)
-    except FileExistsError:  # This should always happen
-        return
 
-    # If it didn't the test fails
-    pytest.fail()
+            archive.addfile(tarinfo, buffer)
 
-
-@pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
-def _test_writing(request, tmp_path):
-    ofilename = tmp_path.joinpath("test.tar." + request.param)
-
-    with xtarfile.open(name=ofilename, mode="w:" + request.param) as archive:
-        buffer1 = BytesIO()
-        buffer1.write(content)
-        buffer1.seek(0)
-
-        tarinfo = xtarfile.TarInfo()
-        tarinfo.size = len(content)
-        tarinfo.name = filename
-        archive.addfile(tarinfo, buffer1)
-
-    return ofilename, request.param
-
-
-@pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
-def _test_reading(request):
-    try:
-        with xtarfile.open(name=testfiles[request.param], mode="r") as archive:
+        with xtarfile_open(path, context.mode('r')) as archive:
             while True:
                 member = archive.next()
                 if member is None:
-                    pytest.fail('{} not found in archive'.format(filename))
+                    self.fail('{} not found in archive'.format(filename))
                 if member.name == filename:
-                    buffer1 = archive.extractfile(member)
-                    actual_content = buffer1.read()
+                    buffer = archive.extractfile(member)
+                    actual_content = buffer.read()
                     break
 
-        return actual_content
-    except KeyError:
-        if request.param == "gz":
-            pytest.xfail("gz doesn't support PathLike objects, so no files were created.")
+        self.assertEqual(actual_content, content)
 
+    def given_file(self, suffix):
+        fd, path = mkstemp(suffix)
+        close(fd)
+        self.tempfiles.append(path)
+        return path
 
-@pytest.fixture(params=STREAM_OPEN_METHODS)
-def _test_stream_mode_writing(request, tmp_path):
-    ofilename = tmp_path.joinpath("test.tar." + request.param)
-    with xtarfile.open(name=ofilename, mode="w|" + request.param) as archive:
-        buffer1 = BytesIO()
-        buffer1.write(content)
-        buffer1.seek(0)
+    def setUp(self):
+        self.tempfiles = []
 
-        tarinfo = xtarfile.TarInfo()
-        tarinfo.size = len(content)
-        tarinfo.name = filename
-        archive.addfile(tarinfo, buffer1)
-
-    return ofilename, request.param
-
-
-@pytest.fixture(params=STREAM_OPEN_METHODS)
-def _test_stream_mode_reading(request):
-    with xtarfile.open(name=testfiles[request.param], mode="r|" + request.param) as archive:
-        while True:
-            member = archive.next()
-            if member is None:
-                pytest.fail('{} not found in archive'.format(filename))
-            if member.name == filename:
-                buffer1 = archive.extractfile(member)
-                actual_content = buffer1.read()
-                break
-
-    return actual_content
-
-
-@pytest.fixture(params=STREAM_OPEN_METHODS)
-def _test_stream_mode_reading_auto(request):
-    with xtarfile.open(name=testfiles[request.param], mode="r|*") as archive:
-        while True:
-            member = archive.next()
-            if member is None:
-                pytest.fail('{} not found in archive'.format(filename))
-            if member.name == filename:
-                buffer1 = archive.extractfile(member)
-                actual_content = buffer1.read()
-                break
-
-    return actual_content
-
-
-@pytest.fixture(params=xtarfile.xtarfile.OPEN_METH)
-def _test_import_is_tarfile(request):
-    return xtarfile.is_tarfile(testfiles[request.param])
-
-
-@pytest.fixture(params=STREAM_OPEN_METHODS)
-def _test_import_is_tarfile_after_stream(request):
-    return xtarfile.is_tarfile(testfiles[request.param])
-
-
-# Run the tests
-def test_stream_mode_writing(_test_stream_mode_writing):
-    filename, OPEN_METH = _test_stream_mode_writing
-    assert filename.is_file() == True  # noqa: E712
-    testfiles.update({OPEN_METH: filename})
-
-
-def test_import_is_tarfile_after_stream(_test_import_is_tarfile_after_stream):
-    assert _test_import_is_tarfile_after_stream == True  # noqa: E712
-
-
-def test_reading_stream_created_files(_test_reading):
-    assert content == _test_reading
-
-
-def test_stream_mode_reading(_test_stream_mode_reading):
-    assert content == _test_stream_mode_reading
-
-
-def test_stream_mode_reading_auto(_test_stream_mode_reading_auto):
-    assert content == _test_stream_mode_reading_auto
-
-
-testfiles.clear()
-
-
-def test_writing(_test_writing):
-    filename, OPEN_METH = _test_writing
-    assert filename.is_file() == True  # noqa: E712
-    testfiles.update({OPEN_METH: filename})
-
-
-def test_import_is_tarfile_after_writing(_test_import_is_tarfile):
-    assert _test_import_is_tarfile == True  # noqa: E712
-
-
-def test_reading(_test_reading):
-    assert content == _test_reading
-
-
-# Make sure opening with 'x' works as expected
-def test_xwriting_filexists(_test_xwriting_filexists):
-    pass
-
-
-testfiles.clear()
-
-
-def test_xwriting_filedoesntexist(_test_xwriting_filedoesntexist):
-    filename, OPEN_METH = _test_xwriting_filedoesntexist
-    assert filename.is_file() == True  # noqa: E712
-    testfiles.update({OPEN_METH: filename})
-
-
-def test_import_is_tarfile_after_xwriting(_test_import_is_tarfile):
-    assert _test_import_is_tarfile == True  # noqa: E712
-
-
-def test_reading_after_xwrite_2(_test_reading):
-    assert content == _test_reading
+    def tearDown(self):
+        for path in self.tempfiles:
+            remove(path)
