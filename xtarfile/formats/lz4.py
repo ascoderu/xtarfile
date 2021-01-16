@@ -10,7 +10,7 @@ compdict = {'lz4': 'lz4open'}
 
 # This variable is used to overload _StreamProxy.getcomptype with additional formats
 # Make sure indentation is correct and that the line ends with '\n'
-getcomptype = '    elif self.buf.startswith(b"\\x04\\x22\\x4D\\x18"): return "lz4"\n'
+getcomptype = ['    elif self.buf.startswith(b"\\x04\\x22\\x4D\\x18"): return "lz4"\n']
 
 
 # This variable is used to overload _Stream.__init__ with additional formats

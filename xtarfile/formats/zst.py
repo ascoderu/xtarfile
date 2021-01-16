@@ -9,7 +9,7 @@ compdict = {'zst': 'zstopen',
 
 # This variable is used to overload _StreamProxy.getcomptype with additional formats
 # Make sure indentation is correct and that the line ends with '\n'
-getcomptype = '    elif self.buf.startswith(b"\\x28\\xB5\\x2F\\xFD"): return "zst"\n'
+getcomptype = ['    elif self.buf.startswith(b"\\x28\\xB5\\x2F\\xFD"): return "zst"\n']
 
 
 # This variable is used to overload _Stream.__init__ with additional formats

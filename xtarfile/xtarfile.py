@@ -13,6 +13,13 @@ import inspect
 # Get source of _Stream.__init__()
 streaminitfunction, lines = inspect.getsourcelines(_Stream.__init__)
 
+# Make sure that line 59 is what we expect.
+# If it is not xtarfile.py needs to be updated with new line numbers.
+if streaminitfunction[59] != '                    self.cmp = lzma.LZMACompressor()\n' \
+        or streaminitfunction[61] != '            elif comptype != "tar":\n':
+    print("tarfile.py has changed! xtarfile needs to be updated!")
+    exit(1)
+
 # Remove indendation, it's a class function but our overload is not.
 streaminitfunction = [lines[4:] for lines in streaminitfunction]
 
@@ -25,6 +32,12 @@ streaminitfunction[0] = "def stream_init_overload(self, name, mode, comptype, fi
 
 # Get source of _StreamProxy.getcomptype()
 getcomptypefunction, lines = inspect.getsourcelines(_StreamProxy.getcomptype)
+
+# Make sure that line 6 and 7 is what we expect.
+# If it is not xtarfile.py needs to be updated with new line numbers.
+if getcomptypefunction[6] != '            return "xz"\n' or getcomptypefunction[7] != '        else:\n':
+    print("tarfile.py has changed! xtarfile needs to be updated!")
+    exit(1)
 
 # Remove indendation, it's a class function but our overload is not.
 getcomptypefunction = [lines[4:] for lines in getcomptypefunction]
@@ -49,9 +62,11 @@ for f in formats_path.iterdir():
         cf.update(getattr(compmod, 'compdict'))
 
         # Get _Stream.__init__ code and add it to our function
+        # 60:60 is the line where we insert our code, this might have to be changed if tarfile.py is updated
         streaminitfunction[60:60] = getattr(compmod, 'streaminit')
 
         # Get _StreamProxy.getcomptype code and add it to our function
+        # 7:7 is the line to insert the code to, this might have to be changed if tarfile.py is updated
         getcomptypefunction[7:7] = getattr(compmod, 'getcomptype')
 
         # Add as subclass to xtarfile
