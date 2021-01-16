@@ -13,7 +13,7 @@ import inspect
 # Get source of _Stream.__init__()
 streaminitfunction, lines = inspect.getsourcelines(_Stream.__init__)
 
-# Make sure that line 59 is what we expect.
+# Make sure that line 59 and 61 is what we expect.
 # If it is not xtarfile.py needs to be updated with new line numbers.
 if streaminitfunction[59] != '                    self.cmp = lzma.LZMACompressor()\n' \
         or streaminitfunction[61] != '            elif comptype != "tar":\n':
