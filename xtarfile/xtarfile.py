@@ -17,7 +17,7 @@ streaminitfunction, lines = inspect.getsourcelines(_Stream.__init__)
 # If it is not xtarfile.py needs to be updated with new line numbers.
 if streaminitfunction[59] != '                    self.cmp = lzma.LZMACompressor()\n' \
         or streaminitfunction[61] != '            elif comptype != "tar":\n':
-    print("tarfile.py has changed! xtarfile needs to be updated!")
+    print("xtarfile is incompatible with tarfile.py. Has tarfile.py been changed?")
     exit(1)
 
 # Remove indendation, it's a class function but our overload is not.
@@ -36,7 +36,7 @@ getcomptypefunction, lines = inspect.getsourcelines(_StreamProxy.getcomptype)
 # Make sure that line 6 and 7 is what we expect.
 # If it is not xtarfile.py needs to be updated with new line numbers.
 if getcomptypefunction[6] != '            return "xz"\n' or getcomptypefunction[7] != '        else:\n':
-    print("tarfile.py has changed! xtarfile needs to be updated!")
+    print("xtarfile is incompatible with tarfile.py. Has tarfile.py been changed?")
     exit(1)
 
 # Remove indendation, it's a class function but our overload is not.
