@@ -6,9 +6,15 @@ from setuptools import setup
 with io.open('README.rst', encoding='utf-8') as fobj:
     long_description = fobj.read().strip()
 
+try:
+    with io.open('version.txt', encoding='utf-8') as fobj:
+        version = fobj.read().strip()
+except FileNotFoundError:
+    version = 'dev'
+
 setup(
     name='xtarfile',
-    version='0.1.0,
+    version=version,
     author='Clemens Wolff',
     author_email='clemens.wolff+pypi@gmail.com',
     packages=find_packages(exclude=['tests']),
