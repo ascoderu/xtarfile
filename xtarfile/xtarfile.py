@@ -7,8 +7,12 @@ from xtarfile.lz4 import Lz4Tarfile
 
 _HANDLERS = {
     'zstd': ZstandardTarfile,
+    'tzstd': ZstandardTarfile,
     'zst': ZstandardTarfile,
+    'tzst': ZstandardTarfile,
     'lz4': Lz4Tarfile,
+    'tlz4': Lz4Tarfile,
+    'tlz': Lz4Tarfile,
 }
 
 _NATIVE_FORMATS = ('gz', 'bz2', 'xz', 'tar')
