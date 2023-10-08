@@ -22,7 +22,7 @@ _NATIVE_FORMATS = ('gz', 'bz2', 'xz', 'tar')
 SUPPORTED_FORMATS = frozenset(chain(_HANDLERS.keys(), _NATIVE_FORMATS))
 
 
-def get_compression(path: Union[str, os.Pathlike], mode: str) -> str:
+def get_compression(path: Union[str, os.PathLike], mode: str) -> str:
     path = os.fspath(path)
     for delim in (':', '|'):
         delim_index = mode.rfind(delim)
@@ -36,7 +36,7 @@ def get_compression(path: Union[str, os.Pathlike], mode: str) -> str:
     return ''
 
 
-def xtarfile_open(path: Union[str, os.Pathlike], mode: str, **kwargs):
+def xtarfile_open(path: Union[str, os.PathLike], mode: str, **kwargs):
     compression = get_compression(path, mode)
 
     if not compression or compression in _NATIVE_FORMATS:
