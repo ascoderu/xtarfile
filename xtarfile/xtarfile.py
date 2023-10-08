@@ -1,3 +1,5 @@
+import os
+from typing import Union
 from itertools import chain
 from tarfile import open as tarfile_open
 
@@ -33,8 +35,8 @@ def get_compression(path: str, mode: str) -> str:
     return ''
 
 
-def xtarfile_open(path: str, mode: str, **kwargs):
-    compression = get_compression(path, mode)
+def xtarfile_open(path: Union[str, os.Pathlike], mode: str, **kwargs):
+    compression = get_compression(os.fspath(path), mode)
 
     if not compression or compression in _NATIVE_FORMATS:
         return tarfile_open(path, mode, **kwargs)
