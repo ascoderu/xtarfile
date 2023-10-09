@@ -22,7 +22,7 @@ _NATIVE_FORMATS = ('gz', 'bz2', 'xz', 'tar')
 SUPPORTED_FORMATS = frozenset(chain(_HANDLERS.keys(), _NATIVE_FORMATS))
 
 
-def get_compression(path: Union[str, os.PathLike], mode: str) -> str:
+def get_compression(path: Union[str, PathLike], mode: str) -> str:
     path = fspath(path)
     for delim in (':', '|'):
         delim_index = mode.rfind(delim)
