@@ -1,7 +1,7 @@
-import os
-from typing import Union
 from itertools import chain
+from os import PathLike, fspath
 from tarfile import open as tarfile_open
+from typing import Union
 
 from xtarfile.zstd import ZstandardTarfile
 from xtarfile.lz4 import Lz4Tarfile
@@ -23,7 +23,7 @@ SUPPORTED_FORMATS = frozenset(chain(_HANDLERS.keys(), _NATIVE_FORMATS))
 
 
 def get_compression(path: Union[str, os.PathLike], mode: str) -> str:
-    path = os.fspath(path)
+    path = fspath(path)
     for delim in (':', '|'):
         delim_index = mode.rfind(delim)
         if delim_index > -1:
@@ -36,7 +36,7 @@ def get_compression(path: Union[str, os.PathLike], mode: str) -> str:
     return ''
 
 
-def xtarfile_open(path: Union[str, os.PathLike], mode: str, **kwargs):
+def xtarfile_open(path: Union[str, PathLike], mode: str, **kwargs):
     compression = get_compression(path, mode)
 
     if not compression or compression in _NATIVE_FORMATS:
